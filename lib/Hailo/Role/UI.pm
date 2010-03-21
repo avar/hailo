@@ -1,10 +1,10 @@
 package Hailo::Role::UI;
 
 use 5.010;
-use Any::Moose '::Role';
-use namespace::clean -except => 'meta';
+use strict;
+use parent 'Hailo::Role::Any';
 
-requires 'run';
+sub run { die }
 
 1;
 

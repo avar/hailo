@@ -1,20 +1,15 @@
 package Hailo::UI::ReadLine;
 
 use 5.010;
-use Any::Moose;
-BEGIN {
-    return unless Any::Moose::moose_is_preferred();
-    require MooseX::StrictConstructor;
-    MooseX::StrictConstructor->import;
-}
-use Encode 'decode';
+use strict;
+use parent 'Hailo::Role::UI';
 use Hailo;
 use Term::ReadLine;
-use namespace::clean -except => 'meta';
 
-sub BUILD {
+sub new {
     $ENV{PERL_RL} = 'Perl o=0' unless $ENV{PERL_RL};
-    return;
+
+    shift->SUPER::new(@_);
 }
 
 sub run {
@@ -32,7 +27,7 @@ sub run {
     return;
 }
 
-__PACKAGE__->meta->make_immutable;
+1;
 
 =encoding utf8
 
