@@ -1,45 +1,45 @@
 package Hailo::Engine::Default;
 
 use 5.010;
-use Any::Moose;
-use Any::Moose 'X::Types::'.any_moose() => [qw< Int >];
 use List::Util qw<min first shuffle>;
 use List::MoreUtils qw<uniq>;
 
-with qw[ Hailo::Role::Arguments Hailo::Role::Engine ];
+# Accessors
+for my $method (qw[ storage order ]) {
+    no strict 'refs';
+    *{$method} = sub {
+        my ($self, @args) = @_;
+        return $self->{$method} unless @args;
+        return $self->{$method} = $args[0] if @args == 1;
+        die "not implemented";
+    };
+}
 
-has repeat_limit => (
-    isa     => Int,
-    is      => 'rw',
-    lazy    => 1,
-    default => sub {
-        my ($self) = @_;
-        my $order = $self->order;
-        return min(($order * 10), 50);
-    }
-);
+sub new {
+    my ($class, %args) = @_;
 
-sub BUILD {
-    my ($self) = @_;
+    my $self = {
+        repeat_limit => min(($args{order} * 10), 50),
+        %args,
+    };
 
     # This performance hack is here because in our tight loops calling
     # $self->storage->sth->{...} is actually a significant part of the
     # overall program execution time since we're doing two method
     # calls and hash dereferences for each call to the database.
-
-    my $sth = $self->storage->sth;
+    my $sth = $self->{storage}->sth;
     while (my ($k, $v) = each %$sth) {
         $self->{"_sth_$k"} = $v;
     }
 
-    return;
+    bless $self, $class;
 }
 
 ## no critic (Subroutines::ProhibitExcessComplexity)
 sub reply {
     my $self = shift;
     my $tokens = shift // [];
-    my $order = $self->order;
+    my $order = $self->{order};
 
     # we will favor these tokens when making the reply
     my @key_tokens = @$tokens;
@@ -73,7 +73,7 @@ sub reply {
     # remove key tokens we're already using
     @key_ids = grep { my $used = $_; !first { $_ == $used } @token_ids } @key_ids;
 
-    my $repeat_limit = $self->repeat_limit;
+    my $repeat_limit = $self->{repeat_limit};
     my $expr_id = $orig_expr_id;
 
     # construct the end of the reply
@@ -123,7 +123,7 @@ sub reply {
 
 sub learn {
     my ($self, $tokens) = @_;
-    my $order = $self->order;
+    my $order = $self->{order};
 
     # only learn from inputs which are long enough
     return if @$tokens < $order;
@@ -266,7 +266,7 @@ sub _random_expr {
     }
     else {
         # try the positions in a random order
-        for my $pos (shuffle 0 .. $self->order-1) {
+        for my $pos (shuffle 0 .. $self->{order}-1) {
             my $column = "token${pos}_id";
 
             # get a random expression which includes the token at this position
@@ -304,7 +304,7 @@ sub _pos_token {
     return $novel_tokens[rand @novel_tokens];
 }
 
-__PACKAGE__->meta->make_immutable;
+1;
 
 =encoding utf8
 
