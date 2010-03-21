@@ -1,63 +1,72 @@
 #!/usr/bin/env perl
+package hailo;
 use 5.010;
+use strict;
+use parent 'Hailo';
 use open qw< :encoding(utf8) :std >;
-use Dir::Self;
-use Any::Moose;
-use Encode qw(decode);
-use Hailo::Command;
-use namespace::clean -except => 'meta';
+use Encode qw< decode >;
+use Pod::Usage ();
+use Getopt::Long::Descriptive;
 
-# Nothing to see here
-__PACKAGE__->meta->make_immutable;
+my ($opt, $usage) = describe_options(
+    __PACKAGE__ . ' %o',
+    [ 'version|v',           'Print version and exit' ],
+    [ 'ui|u',                'Use UI CLASS' ],
+    [ 'train|t',             'Learn from all the lines in FILE, use - for STDIN' ],
+    [ 'stats|s',             'Print statistics about the brain' ],
+    [ 'reply|r',             'Reply to STRING' ],
+    [ 'progress|p',          'Print import progress with Term::ProgressBar' ],
+    [ 'order|o',             'Markov order' ],
+    [ 'learn|l',             'Learn from STRING' ],
+    [ 'help|h',              'This help message' ],
+    [ 'brain|b',             'Load/save brain to/from FILE' ],
+    [ 'autosave|a',          'Save the brain on exit (on by default)' ],
+    [ 'tokenizer|T',         'Use tokenizer CLASS' ],
+    [ 'storage|S',           'Use storage CLASS' ],
+    [ 'learn-reply|L',       'Learn from STRING and reply to it' ],
+    [ 'engine|E',            'Use engine CLASS' ],
+    [ 'ui-args',              'Arguments for the UI class' ],
+    [ 'tokenizer-args',       'Arguments for the Tokenizer class' ],
+    [ 'storage-args',         'Arguments for the Storage class' ],
+    [ 'examples',             'Print examples along with the help message' ],
+    [ 'engine-args',          'Arguments for the Engine class' ],
+    [ 'brain-resource',       'Alias for `brain\' for backwards compatability' ],
+);
+
+print($usage->text), exit if $opt->help;
+
+help() unless @ARGV;
 
 # use utf8 everywhere
 $_ = decode('utf8', $_) for @ARGV;
 
 # Set programname
-$0 = 'hailo';
+$0 = __PACKAGE__;
 
 if ($^O eq 'linux') {
     local $@;
     eval {
         require Sys::Prctl;
-        Sys::Prctl::prctl_name('hailo');
+        Sys::Prctl::prctl_name(__PACKAGE__);
     };
 }
-
-# I want my mommy!
-$Hailo::Command::HERE_MOMMY = __DIR__;
 
 # Show help if run without arguments
 @ARGV = qw(--help) unless @ARGV;
 
-# Hailing frequencies open
-Hailo::Command->new_with_options->run;
-
-=encoding utf8
+sub help
+{
+    my %arg = @_;
+ 
+    Pod::Usage::pod2usage(
+        -verbose => $arg{ verbose },
+        -exitval => $arg{ exitval } || 0,
+    );
+}
 
 =head1 NAME
 
-hailo - Command-line interface to the L<Hailo|Hailo> Markov bot
-
-=head1 SYNOPSIS
-
-Train in-memory from fortune files and reply:
-
-    for i in {1..1000}; do fortune >> /tmp/fortune.trn; done
-    hailo --brain :memory: --train /tmp/fortune.trn --reply art
-    # ==> He hath eaten me out of an art deeper than we ourselves.
-
-Create an on-disk brain for later use:
-
-    hailo --brain hailo.brn --train /tmp/fortune.trn
-    hailo --brain hailo.brn --reply "is"
-    # ==> Earth is ballasted with bones of millions of dollars.
-
-Interact with the brain using readline:
-
-    hailo --brain hailo.brn
-    hailo> hello there
-    # ==> Wife asked "what have you got there?" replied he, "just my cup of fur".
+hailo - Command-line interface to the L<Hailo|Hailo> Markov engine
 
 =head1 DESCRIPTION
 
