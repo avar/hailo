@@ -3,7 +3,6 @@ package Hailo;
 use 5.010;
 use autodie qw(open close);
 use List::Util qw(first);
-use namespace::clean -except => 'meta';
 
 # Accessors
 for my $method (qw[ brain order _custom_order ]) {

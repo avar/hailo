@@ -4,7 +4,6 @@ use 5.010;
 use strict;
 use parent 'Hailo::Storage';
 use List::MoreUtils qw< all >;
-use namespace::clean -except => 'meta';
 
 sub dbd { 'mysql' };
 
