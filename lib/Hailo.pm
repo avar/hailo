@@ -2,55 +2,48 @@ package Hailo;
 
 use 5.010;
 use autodie qw(open close);
-use Any::Moose;
-use Any::Moose 'X::Types::'.any_moose() => [qw/Int Str Bool HashRef/];
-BEGIN {
-    return unless Any::Moose::moose_is_preferred();
-    require MooseX::StrictConstructor;
-    MooseX::StrictConstructor->import;
-}
 use List::Util qw(first);
 use namespace::clean -except => 'meta';
 
-has brain => (
-    isa => Str,
-    is  => 'rw',
-);
+# Accessors
+for my $method (qw[ brain order _custom_order ]) {
+    no strict 'refs';
+    *{$method} = sub {
+        my ($self, @args) = @_;
+        return $self->{$method} unless @args;
+        return $self->{$method} = $args[0] if @args == 1;
+        die "not implemented";
+    };
+}
 
-has order => (
-    isa     => Int,
-    is      => 'rw',
-    default => 2,
-    trigger => sub {
-        my ($self, $order) = @_;
-        $self->_custom_order(1);
-    },
-);
+sub new {
+    my ($class, %args) = @_;
 
-has _custom_order => (
-    isa           => Bool,
-    is            => 'rw',
-    default       => 0,
-    init_arg      => undef,
-    documentation => "Here so we can differentiate between the default value of order being explictly set and being set by default",
-);
+    my $self = {
+        # Defaults
+        order           => 2,
+        save_on_exit    => 1,
 
-has save_on_exit => (
-    isa     => Bool,
-    is      => 'rw',
-    default => 1,
-);
+        engine_class    => 'Default',
+        storage_class   => 'SQLite',
+        tokenizer_class => 'Words',
+        ui_class        => 'ReadLine',
 
-has brain_resource => (
-    documentation => "Alias for `brain' for backwards compatability",
-    isa           => Str,
-    is            => 'rw',
-    trigger       => sub {
-        my ($self, $brain) = @_;
-        $self->brain($brain);
-    },
-);
-    
+        engine_args    => {},
+        storage_args   => {},
+        tokenizer_args => {},
+        ui_args        => {},
+
+
+        # User options
+        %args,
+    };
+
+    $self->{_custom_order} = 1 if exists $args{order};
+
+    bless $self, $class;
+}
+
 my %has = (
     engine => {
         name => 'Engine',
@@ -76,49 +69,27 @@ for my $k (keys %has) {
     my $method_class  = "${k}_class";
     my $method_args   = "${k}_args";
 
-    # working classes
-    has "${k}_class" => (
-        isa           => Str,
-        is            => "rw",
-        default       => $default,
-    );
-
-    # Object arguments
-    has "${k}_args" => (
-        documentation => "Arguments for the $name class",
-        isa           => HashRef,
-        coerce        => 1,
-        is            => "ro",
-        default       => sub { +{} },
-    );
-
-    # Working objects
-    has "_${k}" => (
-        does        => "Hailo::Role::$name",
-        lazy_build  => 1,
-        is          => 'ro',
-        init_arg    => undef,
-    );
-
     # Generate the object itself
     no strict 'refs';
-    *{"_build__${k}"} = sub {
+    *{"_${k}"} = sub {
         my ($self) = @_;
-        my $obj = $self->_new_class(
+
+        return $self->{"_${k}"} if $self->{"_${k}"};
+        return $self->{"_${k}"} = $self->_new_class(
             $name,
-            $self->$method_class,
+            $self->{$method_class},
             {
-                arguments => $self->$method_args,
+                arguments => $self->{$method_args},
                 ($k ~~ [ qw< engine storage > ]
-                 ? (order     => $self->order)
+                 ? (order     => $self->{order})
                  : ()),
                 ($k ~~ [ qw< engine > ]
                  ? (storage   => $self->_storage)
                  : ()),
-                (($k ~~ [ qw< storage > ] and defined $self->brain)
+                (($k ~~ [ qw< storage > ] and defined $self->{brain})
                  ? (
                      hailo => $self,
-                     brain => $self->brain
+                     brain => $self->{brain}
                  )
                  : ()),
             },
@@ -163,15 +134,11 @@ sub _new_class {
         }
     }
 
-
-
-    if (Any::Moose::moose_is_preferred()) {
-        require Class::MOP;
-        eval { Class::MOP::load_class($pkg) };
-    } else {
+    {
+        local $@;
         eval qq[require $pkg];
+        die $@ if $@;
     }
-    die $@ if $@;
 
     return $pkg->new(%$args);
 }
@@ -304,7 +271,7 @@ sub stats {
     return $self->_storage->totals();
 }
 
-sub DEMOLISH {
+sub DESTROY {
     my ($self) = @_;
     $self->save_on_exit if $self->{_storage} and $self->save;
     return;
@@ -315,7 +282,7 @@ sub _is_interactive {
     return IO::Interactive::is_interactive();
 }
 
-__PACKAGE__->meta->make_immutable;
+1;
 
 =encoding utf8
 
