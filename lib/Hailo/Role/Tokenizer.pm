@@ -1,23 +1,20 @@
 package Hailo::Role::Tokenizer;
 
 use 5.010;
-use Any::Moose '::Role';
-use Any::Moose 'X::Types::'.any_moose() => [qw/HashRef Int/];
-use namespace::clean -except => 'meta';
+use parent 'Hailo::Role::Any';
+use strict;
 
-has spacing => (
-    isa     => HashRef[Int],
-    is      => 'rw',
-    default => sub { {
+sub spacing {
+    return +{
         normal  => 0,
         prefix  => 1,
         postfix => 2,
         infix   => 3,
-    } },
-);
+    };
+}
 
-requires 'make_tokens';
-requires 'make_output';
+sub make_tokens { die }
+sub make_output { die }
 
 1;
 

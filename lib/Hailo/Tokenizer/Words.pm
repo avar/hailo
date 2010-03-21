@@ -1,17 +1,8 @@
 package Hailo::Tokenizer::Words;
 
 use 5.010;
+use parent 'Hailo::Role::Tokenizer';
 use utf8;
-use Any::Moose;
-BEGIN {
-    return unless Any::Moose::moose_is_preferred();
-    require MooseX::StrictConstructor;
-    MooseX::StrictConstructor->import;
-}
-use namespace::clean -except => 'meta';
-
-with qw(Hailo::Role::Arguments
-        Hailo::Role::Tokenizer);
 
 # tokenization
 my $DECIMAL    = qr/[.,]/;
@@ -131,7 +122,7 @@ sub make_output {
     return $reply;
 }
 
-__PACKAGE__->meta->make_immutable;
+1;
 
 =encoding utf8
 

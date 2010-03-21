@@ -1,16 +1,8 @@
 package Hailo::Tokenizer::Chars;
 
 use 5.010;
-use Any::Moose;
-BEGIN {
-    return unless Any::Moose::moose_is_preferred();
-    require MooseX::StrictConstructor;
-    MooseX::StrictConstructor->import;
-}
-use namespace::clean -except => 'meta';
-
-with qw(Hailo::Role::Arguments
-        Hailo::Role::Tokenizer);
+use parent 'Hailo::Role::Tokenizer';
+use strict;
 
 # output -> tokens
 sub make_tokens {
@@ -33,7 +25,7 @@ sub trim {
     return $txt;
 }
 
-__PACKAGE__->meta->make_immutable;
+1;
 
 =encoding utf8
 
