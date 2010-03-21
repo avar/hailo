@@ -12,9 +12,6 @@ use Hailo;
 use Term::ReadLine;
 use namespace::clean -except => 'meta';
 
-with qw(Hailo::Role::Arguments
-        Hailo::Role::UI);
-
 sub BUILD {
     $ENV{PERL_RL} = 'Perl o=0' unless $ENV{PERL_RL};
     return;

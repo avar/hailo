@@ -1,60 +1,38 @@
 package Hailo::Storage;
 
 use 5.010;
-use Any::Moose;
-use Any::Moose 'X::Types::'.any_moose() => [qw<ArrayRef HashRef Int Str Bool>];
-BEGIN {
-    return unless Any::Moose::moose_is_preferred();
-    require MooseX::StrictConstructor;
-    MooseX::StrictConstructor->import;
-}
+use strict;
+use parent 'Hailo::Role::Storage';
 use DBI;
 use Hailo::Storage::Schema;
 
-has dbd => (
-    isa           => Str,
-    is            => 'ro',
-    lazy_build    => 1,
-    documentation => "The DBD::* driver we're using",
-);
+# Accessors
+for my $method (qw[ _engaged _boundary_token_id ]) {
+    no strict 'refs';
+    *{$method} = sub {
+        my ($self, @args) = @_;
+        return $self->{$method} unless @args;
+        return $self->{$method} = $args[0] if @args == 1;
+        die "not implemented";
+    };
+}
 
-has dbd_options => (
-    isa           => HashRef,
-    is            => 'ro',
-    lazy_build    => 1,
-    documentation => 'Options passed as the last argument to DBI->connect()',
-);
-
-sub _build_dbd_options {
+sub dbd_options {
     my ($self) = @_;
     return {
         RaiseError => 1
     };
 }
 
-has dbh => (
-    isa           => 'DBI::db',
-    is            => 'ro',
-    lazy_build    => 1,
-    documentation => 'Our DBD object',
-);
-
-sub _build_dbh {
+sub dbh {
     my ($self) = @_;
-    my $dbd_options = $self->dbi_options;
-
-    return DBI->connect($self->dbi_options);
+    return $self->{dbh} // ($self->{dbh} = do {
+        my $dbd_options = $self->dbi_options;
+        DBI->connect(@{ $self->dbi_options });
+    });
 };
 
-has dbi_options => (
-    isa           => ArrayRef,
-    is            => 'ro',
-    auto_deref    => 1,
-    lazy_build    => 1,
-    documentation => 'Options passed to DBI->connect()',
-);
-
-sub _build_dbi_options {
+sub dbi_options {
     my ($self) = @_;
     my $dbd = $self->dbd;
     my $dbd_options = $self->dbd_options;
@@ -70,29 +48,10 @@ sub _build_dbi_options {
     return \@options;
 }
 
-has _engaged => (
-    isa           => Bool,
-    is            => 'rw',
-    default       => 0,
-    documentation => 'Have we done setup work to get this database going?',
-);
-
-has sth => (
-    isa        => HashRef,
-    is         => 'ro',
-    lazy_build => 1,
-    documentation => 'A HashRef of prepared DBI statement handles',
-);
-
-sub _build_sth {
+sub sth {
     my ($self) = @_;
-    return Hailo::Storage::Schema->sth($self->dbd, $self->dbh, $self->order);
+    return $self->{sth} // ($self->{sth} = Hailo::Storage::Schema->sth($self->dbd, $self->dbh, $self->order));
 }
-
-has _boundary_token_id => (
-    isa => Int,
-    is  => 'rw',
-);
 
 # bootstrap the database
 sub _engage {
@@ -192,7 +151,7 @@ sub totals {
     return $token, $expr, $prev, $next;
 }
 
-__PACKAGE__->meta->make_immutable;
+1;
 
 =encoding utf8
 

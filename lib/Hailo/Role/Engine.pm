@@ -1,25 +1,20 @@
 package Hailo::Role::Engine;
 
 use 5.10.0;
-use Any::Moose '::Role';
-use Any::Moose 'X::Types::'.any_moose() => [qw< Int >];
-use namespace::clean -except => 'meta';
 
-has storage => (
-    required      => 1,
-    is            => 'ro',
-    documentation => "Our copy of the current Storage object",
-);
+# Accessors
+for my $method (qw[ storage order ]) {
+    no strict 'refs';
+    *{$method} = sub {
+        my ($self, @args) = @_;
+        return $self->{$method} unless @args;
+        return $self->{$method} = $args[0] if @args == 1;
+        die "not implemented";
+    };
+}
 
-has order => (
-    required      => 1,
-    isa           => Int,
-    is            => 'rw',
-    documentation => "Our copy of the current markov order",
-);
-
-requires 'learn';
-requires 'reply';
+sub learn { die }
+sub reply { die }
 
 1;
 

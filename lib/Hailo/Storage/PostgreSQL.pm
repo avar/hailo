@@ -1,27 +1,20 @@
 package Hailo::Storage::PostgreSQL;
 
 use 5.010;
-use Any::Moose;
-BEGIN {
-    return unless Any::Moose::moose_is_preferred();
-    require MooseX::StrictConstructor;
-    MooseX::StrictConstructor->import;
-}
-use namespace::clean -except => 'meta';
+use strict;
+use parent 'Hailo::Storage';
 
-extends 'Hailo::Storage';
-with qw(Hailo::Role::Arguments Hailo::Role::Storage);
+sub dbd { 'Pg' };
 
-sub _build_dbd { return 'Pg' };
-
-override _build_dbd_options => sub {
+sub dbd_options {
+    my ($self) = @_;
     return {
-        %{ super() },
+        %{ $self->SUPER::dbd_options },
         pg_enable_utf8 => 1,
     };
-};
+}
 
-sub _build_dbi_options {
+sub dbi_options {
     my ($self) = @_;
     my $dbd = $self->dbd;
     my $dbd_options = $self->dbd_options;
@@ -55,7 +48,7 @@ sub ready {
     return exists $self->arguments->{dbname};
 }
 
-__PACKAGE__->meta->make_immutable;
+1;
 
 =encoding utf8
 

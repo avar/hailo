@@ -1,6 +1,8 @@
 package Hailo::Engine::Default;
 
 use 5.010;
+use strict;
+use parent 'Hailo::Role::Engine';
 use List::Util qw<min first shuffle>;
 use List::MoreUtils qw<uniq>;
 

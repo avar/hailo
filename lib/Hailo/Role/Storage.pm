@@ -1,31 +1,26 @@
 package Hailo::Role::Storage;
 
 use 5.010;
-use Any::Moose '::Role';
-use Any::Moose 'X::Types::'.any_moose() => [qw/Str Int/];
-use namespace::clean -except => 'meta';
+use parent qw[ Hailo::Role::Any Hailo::Role::Arguments ];
+use strict;
 
-has brain => (
-    isa => Str,
-    is  => 'rw',
-);
+# Accessors
+for my $method (qw[ brain order hailo ]) {
+    no strict 'refs';
+    *{$method} = sub {
+        my ($self, @args) = @_;
+        return $self->{$method} unless @args;
+        return $self->{$method} = $args[0] if @args == 1;
+        die "not implemented";
+    };
+}
 
-has order => (
-    isa => Int,
-    is  => 'rw',
-);
-
-has hailo => (
-    isa => 'Hailo',
-    is  => 'ro',
-);
-
-requires 'ready';
-requires 'save';
-requires 'start_learning';
-requires 'stop_learning';
-requires 'start_training';
-requires 'stop_training';
+sub ready { die }
+sub save { die }
+sub start_learning { die }
+sub stop_learning { die }
+sub start_training { die }
+sub stop_training { die }
 
 sub save {
     # does nothing by default

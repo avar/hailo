@@ -1,28 +1,19 @@
 package Hailo::Storage::SQLite;
 
 use 5.010;
-use Any::Moose;
-BEGIN {
-    return unless Any::Moose::moose_is_preferred();
-    require MooseX::StrictConstructor;
-    MooseX::StrictConstructor->import;
-}
-use namespace::clean -except => 'meta';
+use parent 'Hailo::Storage';
 
-extends 'Hailo::Storage';
-with qw(Hailo::Role::Arguments Hailo::Role::Storage);
+sub dbd { 'SQLite' };
 
-sub _build_dbd { return 'SQLite' };
-
-override _build_dbd_options => sub {
+sub dbd_options {
+    my ($self) = @_;
     return {
-        %{ super() },
+        %{ $self->SUPER::dbd_options },
         sqlite_unicode => 1,
     };
-};
+}
 
-around _build_dbi_options => sub {
-    my $orig = shift;
+sub dbi_options {
     my $self = shift;
 
     my $return;
@@ -33,11 +24,11 @@ around _build_dbi_options => sub {
         $self->brain($file);
     }
     else {
-        $return = $self->$orig(@_);
+        $return = $self->SUPER::dbi_options(@_);
     }
 
     return $return;
-};
+}
 
 # Are we running in a mixed mode where we run in memory but
 # restore/backup to disk?
@@ -49,8 +40,8 @@ sub _backup_memory_to_disk {
             and $self->arguments->{in_memory});
 }
 
-before _engage => sub {
-    my ($self) = @_;
+sub _engage {
+    my $self = shift;
 
     # Set any user-defined pragmas
     $self->_set_pragmas;
@@ -59,18 +50,23 @@ before _engage => sub {
         $self->dbh->sqlite_backup_from_file($self->brain);
     }
 
-    return;
+    return $self->SUPER::_engage(@_);
 };
 
-before start_training => sub {
-    my $dbh = shift->dbh;
+sub start_training {
+    my $self = shift;
+    my $dbh = $self->dbh;
     $dbh->do('PRAGMA synchronous=OFF;');
     $dbh->do('PRAGMA journal_mode=OFF;');
-    return;
+    return $self->SUPER::start_training(@_);
 };
 
-after stop_training => sub {
-    my $dbh = shift->dbh;
+sub stop_training {
+    my $self = shift;
+    my $dbh = $self->dbh;
+
+    $self->SUPER::stop_training(@_);
+
     $dbh->do('PRAGMA journal_mode=DELETE;');
     $dbh->do('PRAGMA synchronous=ON;');
     return;
@@ -127,7 +123,7 @@ sub save {
     return;
 };
 
-__PACKAGE__->meta->make_immutable;
+1;
 
 =encoding utf8
 
