@@ -8,10 +8,12 @@ use Test::Exception;
 # errors during DEMOLISH
 
 use Hailo;
-use Hailo::Command;
 
-dies_ok { Hailo->new( order => undef ) } "undef order";
-dies_ok { Hailo->new( order => "foo" ) } "Str order";
+SKIP: {
+    skip "We don't do this anymore because we don't have Moose", 2;
+    dies_ok { Hailo->new( order => undef ) } "undef order";
+    dies_ok { Hailo->new( order => "foo" ) } "Str order";
+}
 
 for (my $i = 1; $i <= 10e2; $i += $i * 2) {
     cmp_ok( Hailo->new( order => $i )->order, '==', $i, "The order is what we put in ($i)" );

@@ -1,7 +1,7 @@
 package Hailo::Test;
 use 5.010;
+use strict;
 use autodie;
-use Any::Moose;
 use Hailo;
 use Test::More;
 use File::Spec::Functions qw(catfile);
@@ -10,7 +10,17 @@ use List::Util qw(shuffle min);
 use File::Temp qw(tempfile tempdir);
 use File::CountLines qw(count_lines);
 use Hailo::Tokenizer::Words;
-use namespace::clean -except => 'meta';
+
+# Accessors
+for my $method (qw[ storage in_memory brain exhaustive brief ]) {
+    no strict 'refs';
+    *{$method} = sub {
+        my ($self, @args) = @_;
+        return $self->{$method} unless @args;
+        return $self->{$method} = $args[0] if @args == 1;
+        die "not implemented";
+    };
+}
 
 sub all_storages {
     return qw(DBD::SQLite DBD::Pg DBD::mysql);
@@ -28,32 +38,24 @@ sub exhaustive_tests {
     return (all_tests(), qw(test_timtoady));
 }
 
-has brief => (
-    is => 'ro',
-    isa => 'Bool',
-    default => 0,
-);
+sub new {
+    my ($class, %args) = @_;
 
-has in_memory => (
-    is => 'ro',
-    isa => 'Bool',
-    default => 1,
-);
+    my $self = { 
+        brief => 0,
+        in_memory => 1,
+        exhaustive => 0,
+        %args,
+    };
 
-has exhaustive => (
-    is => 'ro',
-    isa => 'Bool',
-    default => 0,
-);
+    bless $self, $class;
+}
 
-has tmpdir => (
-    is => 'ro',
-    isa => 'Str',
-    lazy_build => 1,
-);
-
-sub _build_tmpdir {
+sub tmpdir {
     my ($self) = @_;
+
+    return $self->{tmpdir} if $self->{tmpdir};
+
     my $storage = $self->storage;
 
     $storage =~ s/[^A-Za-z0-9]/-/g;
@@ -61,21 +63,13 @@ sub _build_tmpdir {
     # Dir to store our brains
     my $dir = tempdir( "hailo-test-$storage-XXXXX", CLEANUP => 1, TMPDIR => 1 );
 
-    return $dir;
+    return $self->{tmpdir} = $dir;
 }
 
-has brain => (
-    is => 'ro',
-    isa => 'Str',
-);
-
-has tmpfile => (
-    is => 'ro',
-    lazy_build => 1,
-);
-
-sub _build_tmpfile {
+sub tmpfile {
     my ($self) = @_;
+
+    return $self->{tmpfile} if $self->{tmpfile};
 
     # Dir to store our brains
     my $dir = $self->tmpdir;
@@ -83,23 +77,20 @@ sub _build_tmpfile {
     my ($fh, $filename) = tempfile( DIR => $dir, SUFFIX => '.trn', EXLOCK => 0 );
     $fh->autoflush(1);
 
-    return [$fh, $filename];
+    return $self->{tmpfile} = [$fh, $filename];
 }
 
-has hailo => (
-    is => 'ro',
-    isa => "Hailo",
-    lazy_build => 1,
-);
-
-sub _build_hailo {
+sub hailo {
     my ($self) = @_;
+
+    return $self->{hailo} if $self->{hailo};
+
     my $storage = $self->storage;
 
     my %opts = $self->_connect_opts;
     my $hailo = Hailo->new(%opts);
 
-    return $hailo;
+    return $self->{hailo} = $hailo;
 }
 
 sub get_brain {
@@ -132,12 +123,7 @@ sub spawn_storage {
 
     if (exists $classes{$storage}) {
         my $pkg = $classes{$storage};
-        if (Any::Moose::moose_is_preferred()) {
-            require Class::MOP;
-            eval { Class::MOP::load_class($pkg) };
-        } else {
-            eval qq[require $pkg];
-        }
+        eval qq[require $pkg];
 
         return if $@;
     }
@@ -237,11 +223,6 @@ sub _connect_opts {
 
     return %all_opts;
 }
-
-has storage => (
-    is => 'ro',
-    isa => 'Str',
-);
 
 # learn from various sources
 sub train_megahal_trn {
@@ -562,7 +543,7 @@ sub test_file {
     return $path;
 }
 
-sub DEMOLISH {
+sub DESTROY {
     my ($self) = @_;
     my $hailo = $self->hailo;
     my $storage = $self->storage;
@@ -570,4 +551,4 @@ sub DEMOLISH {
     $self->unspawn_storage();
 }
 
-__PACKAGE__->meta->make_immutable;
+1;

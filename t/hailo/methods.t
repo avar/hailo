@@ -1,6 +1,5 @@
 use 5.010;
 use autodie;
-use Any::Moose;
 use List::MoreUtils qw(uniq);
 use Test::More tests => 22;
 use Test::Exception;
@@ -13,9 +12,7 @@ $SIG{__WARN__} = sub {
 
 # new
 SKIP: {
-    if (Any::Moose::mouse_is_preferred()) {
-        skip "Mouse doesn't have X::StrictConstructor", 1;
-    }
+    skip "We don't do this anymore because we don't have Moose", 1;
     dies_ok { Hailo->new( qw( a b c d ) ) } "Hailo dies on unknown arguments";
 }
 
