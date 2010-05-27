@@ -10,9 +10,6 @@ BEGIN {
 }
 use namespace::clean -except => 'meta';
 
-with qw(Hailo::Role::Arguments
-        Hailo::Role::Tokenizer);
-
 # output -> tokens
 method make_tokens($line) {
     my @chars = split //, $line;
@@ -31,6 +28,8 @@ sub trim {
     $txt =~ s/\s+$//;
     return $txt;
 }
+
+with qw[ Hailo::Role::Arguments Hailo::Role::Tokenizer ];
 
 __PACKAGE__->meta->make_immutable;
 

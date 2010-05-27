@@ -11,7 +11,6 @@ BEGIN {
 use namespace::clean -except => 'meta';
 
 extends 'Hailo::Storage';
-with qw(Hailo::Role::Arguments Hailo::Role::Storage);
 
 sub _build_dbd { return 'SQLite' };
 
@@ -122,6 +121,8 @@ method save($filename) {
     }
     return;
 };
+
+with qw[ Hailo::Role::Arguments Hailo::Role::Storage ];
 
 __PACKAGE__->meta->make_immutable;
 

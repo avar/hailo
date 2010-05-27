@@ -212,25 +212,6 @@ for (qw/ save_on_exit order brain /, map { qq[${_}_class] } qw/ engine storage t
     );
 }
 
-# Check validity of options
-before run => sub {
-    my ($self) = @_;
-
-    if (not $self->_storage->ready and
-        (defined $self->_go_reply or
-         defined $self->_go_train or
-         defined $self->_go_learn or
-         defined $self->_go_learn_reply or
-         defined $self->_go_random_reply)) {
-        # TODO: Make this spew out the --help reply just like hailo
-        # with invalid options does usually, but only if run via
-        # ->new_with_options
-        die "To reply/train/learn you must specify options to initialize your storage backend";
-    }
-
-    return;
-};
-
 method run {
     if ($self->_go_version) {
         # Munging strictness because we don't have a version from a
@@ -283,6 +264,25 @@ method run {
     return;
 }
 
+# Check validity of options
+before run => sub {
+    my ($self) = @_;
+
+    if (not $self->_storage->ready and
+        (defined $self->_go_reply or
+         defined $self->_go_train or
+         defined $self->_go_learn or
+         defined $self->_go_learn_reply or
+         defined $self->_go_random_reply)) {
+        # TODO: Make this spew out the --help reply just like hailo
+        # with invalid options does usually, but only if run via
+        # ->new_with_options
+        die "To reply/train/learn you must specify options to initialize your storage backend";
+    }
+
+    return;
+};
+
 override _train_fh => sub {
     my ($self, $fh, $filename) = @_;
 
@@ -291,15 +291,6 @@ override _train_fh => sub {
     } else {
         super();
     }
-};
-
-before train_progress => sub {
-    require Term::Sk;
-    require File::CountLines;
-    File::CountLines->import('count_lines');
-    require Time::HiRes;
-    Time::HiRes->import(qw(gettimeofday tv_interval));
-    return;
 };
 
 method train_progress($fh, $filename) {
@@ -329,11 +320,22 @@ method train_progress($fh, $filename) {
     return;
 }
 
+before train_progress => sub {
+    require Term::Sk;
+    require File::CountLines;
+    File::CountLines->import('count_lines');
+    require Time::HiRes;
+    Time::HiRes->import(qw(gettimeofday tv_interval));
+    return;
+};
+
 # --i--do-not-exist
 sub _getopt_spec_exception { goto &_getopt_full_usage }
 
 # --help
-method _getopt_full_usage($usage, $plain_str) {
+sub _getopt_full_usage {
+    my ($self, $usage, $plain_str) = @_;
+
     # If called from _getopt_spec_exception we get "Unknown option: foo"
     my $warning = ref $usage eq 'ARRAY' ? $usage->[0] : undef;
 

@@ -12,7 +12,6 @@ use List::MoreUtils qw< all >;
 use namespace::clean -except => 'meta';
 
 extends 'Hailo::Storage';
-with qw(Hailo::Role::Arguments Hailo::Role::Storage);
 
 sub _build_dbd { return 'mysql' };
 
@@ -46,6 +45,8 @@ method _build_dbi_options {
 method ready {
     return all { exists $self->arguments->{$_} } qw(database username password);
 }
+
+with qw[ Hailo::Role::Arguments Hailo::Role::Storage ];
 
 __PACKAGE__->meta->make_immutable;
 

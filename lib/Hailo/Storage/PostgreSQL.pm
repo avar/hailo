@@ -11,7 +11,6 @@ BEGIN {
 use namespace::clean -except => 'meta';
 
 extends 'Hailo::Storage';
-with qw(Hailo::Role::Arguments Hailo::Role::Storage);
 
 sub _build_dbd { return 'Pg' };
 
@@ -46,6 +45,8 @@ method _build_dbi_options {
 method ready {
     return exists $self->arguments->{dbname};
 }
+
+with qw[ Hailo::Role::Arguments Hailo::Role::Storage ];
 
 __PACKAGE__->meta->make_immutable;
 

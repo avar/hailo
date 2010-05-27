@@ -6,8 +6,6 @@ use Any::Moose;
 use List::Util qw<min first shuffle>;
 use List::MoreUtils qw<uniq>;
 
-with qw[ Hailo::Role::Arguments Hailo::Role::Engine ];
-
 has repeat_limit => (
     isa     => 'Int',
     is      => 'rw',
@@ -287,6 +285,8 @@ method _construct_reply($what, $expr_id, $token_ids, $key_ids) {
 
     return;
 }
+
+with qw[ Hailo::Role::Arguments Hailo::Role::Engine ];
 
 __PACKAGE__->meta->make_immutable;
 

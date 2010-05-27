@@ -13,9 +13,6 @@ use Hailo;
 use Term::ReadLine;
 use namespace::clean -except => 'meta';
 
-with qw(Hailo::Role::Arguments
-        Hailo::Role::UI);
-
 sub BUILD {
     $ENV{PERL_RL} = 'Perl o=0' unless $ENV{PERL_RL};
     return;
@@ -34,6 +31,8 @@ method run($hailo) {
 
     return;
 }
+
+with qw[ Hailo::Role::Arguments Hailo::Role::UI ];
 
 __PACKAGE__->meta->make_immutable;
 

@@ -12,9 +12,6 @@ BEGIN {
 use Regexp::Common qw/ URI /;
 use namespace::clean -except => 'meta';
 
-with qw(Hailo::Role::Arguments
-        Hailo::Role::Tokenizer);
-
 # tokenization
 my $DECIMAL    = qr/[.,]/;
 my $NUMBER     = qr/$DECIMAL?\d+(?:$DECIMAL\d+)*/;
@@ -153,6 +150,8 @@ method make_output($tokens) {
 
     return $reply;
 }
+
+with qw[ Hailo::Role::Arguments Hailo::Role::Tokenizer ];
 
 __PACKAGE__->meta->make_immutable;
 
