@@ -1,6 +1,7 @@
 package Hailo::Storage;
 
 use 5.010;
+use Method::Signatures::Simple;
 use Any::Moose;
 BEGIN {
     return unless Any::Moose::moose_is_preferred();
@@ -24,8 +25,7 @@ has dbd_options => (
     documentation => 'Options passed as the last argument to DBI->connect()',
 );
 
-sub _build_dbd_options {
-    my ($self) = @_;
+method _build_dbd_options {
     return {
         RaiseError => 1
     };
@@ -38,8 +38,7 @@ has dbh => (
     documentation => 'Our DBD object',
 );
 
-sub _build_dbh {
-    my ($self) = @_;
+method _build_dbh {
     my $dbd_options = $self->dbi_options;
 
     return DBI->connect($self->dbi_options);
@@ -53,8 +52,7 @@ has dbi_options => (
     documentation => 'Options passed to DBI->connect()',
 );
 
-sub _build_dbi_options {
-    my ($self) = @_;
+method _build_dbi_options {
     my $dbd = $self->dbd;
     my $dbd_options = $self->dbd_options;
     my $db = $self->brain // '';
@@ -83,8 +81,7 @@ has sth => (
     documentation => 'A HashRef of prepared DBI statement handles',
 );
 
-sub _build_sth {
-    my ($self) = @_;
+method _build_sth {
     return Hailo::Storage::Schema->sth($self->dbd, $self->dbh, $self->order);
 }
 
@@ -94,9 +91,7 @@ has _boundary_token_id => (
 );
 
 # bootstrap the database
-sub _engage {
-    my ($self) = @_;
-
+method _engage {
     if ($self->initialized) {
         my $sth = $self->dbh->prepare(qq[SELECT text FROM info WHERE attribute = ?;]);
         $sth->execute('markov_order');
@@ -145,21 +140,18 @@ DIE
     return;
 }
 
-sub start_training {
-    my ($self) = @_;
+method start_training {
     $self->_engage() unless $self->_engaged;
     $self->start_learning();
     return;
 }
 
-sub stop_training {
-    my ($self) = @_;
+method stop_training {
     $self->stop_learning();
     return;
 }
 
-sub start_learning {
-    my ($self) = @_;
+method start_learning {
     $self->_engage() unless $self->_engaged;
 
     # start a transaction
@@ -167,8 +159,7 @@ sub start_learning {
     return;
 }
 
-sub stop_learning {
-    my ($self) = @_;
+method stop_learning {
     # finish a transaction
     $self->dbh->commit;
     return;
@@ -176,8 +167,7 @@ sub stop_learning {
 
 # See if SELECT count(*) FROM info; fails. If not we assume that we
 # have an up and running database.
-sub initialized {
-    my ($self) = @_;
+method initialized {
     my $dbh = $self->dbh;
 
     my ($err, $warn, $res);
@@ -194,8 +184,7 @@ sub initialized {
 }
 
 # return some statistics
-sub totals {
-    my ($self) = @_;
+method totals {
     $self->_engage() unless $self->_engaged;
 
     $self->sth->{token_total}->execute();

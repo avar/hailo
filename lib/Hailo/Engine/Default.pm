@@ -1,6 +1,7 @@
 package Hailo::Engine::Default;
 
 use 5.010;
+use Method::Signatures::Simple;
 use Any::Moose;
 use List::Util qw<min first shuffle>;
 use List::MoreUtils qw<uniq>;
@@ -18,9 +19,7 @@ has repeat_limit => (
     }
 );
 
-sub BUILD {
-    my ($self) = @_;
-
+method BUILD {
     # This performance hack is here because in our tight loops calling
     # $self->storage->sth->{...} is actually a significant part of the
     # overall program execution time since we're doing two method
@@ -35,9 +34,8 @@ sub BUILD {
 }
 
 ## no critic (Subroutines::ProhibitExcessComplexity)
-sub reply {
-    my $self = shift;
-    my $tokens = shift // [];
+method reply($tokens) {
+    $tokens //= [];
 
     # we will favor these tokens when making the reply> shuffle them
     # and discard half.
@@ -84,16 +82,13 @@ sub reply {
     return \@reply;
 }
 
-sub _token_info {
-    my ($self, $id) = @_;
-
+method _token_info($id) {
     $self->{_sth_token_info}->execute($id);
     my @res = $self->{_sth_token_info}->fetchrow_array;
     return \@res;
 }
 
-sub learn {
-    my ($self, $tokens) = @_;
+method learn($tokens) {
     my $order = $self->order;
 
     # only learn from inputs which are long enough
@@ -139,8 +134,7 @@ sub learn {
 }
 
 # sort token ids based on how rare they are
-sub _find_rare_tokens {
-    my ($self, $token_ids, $min) = @_;
+method _find_rare_tokens($token_ids, $min) {
     return unless @$token_ids;
 
     my %links;
@@ -159,9 +153,7 @@ sub _find_rare_tokens {
 }
 
 # increase the link weight between an expression and a token
-sub _inc_link {
-    my ($self, $type, $expr_id, $token_id) = @_;
-
+method _inc_link($type, $expr_id, $token_id) {
     $self->{"_sth_${type}_count"}->execute($expr_id, $token_id);
     my $count = $self->{"_sth_${type}_count"}->fetchrow_array;
 
@@ -176,9 +168,7 @@ sub _inc_link {
 }
 
 # add new expression to the database
-sub _add_expr {
-    my ($self, $token_ids) = @_;
-
+method _add_expr($token_ids) {
     # add the expression
     $self->{_sth_add_expr}->execute(@$token_ids);
     return $self->storage->dbh->last_insert_id(undef, undef, "expr", undef);
@@ -192,9 +182,7 @@ sub _expr_id {
 }
 
 # return token id if the token exists
-sub _token_id {
-    my ($self, $token_info) = @_;
-
+method _token_id($token_info) {
     $self->{_sth_token_id}->execute(@$token_info);
     my $token_id = $self->{_sth_token_id}->fetchrow_array();
 
@@ -203,32 +191,26 @@ sub _token_id {
 }
 
 # get token id (adding the token if it doesn't exist)
-sub _token_id_add {
-    my ($self, $token_info) = @_;
-
+method _token_id_add($token_info) {
     my $token_id = $self->_token_id($token_info);
     $token_id = $self->_add_token($token_info) unless defined $token_id;
     return $token_id;
 }
 
 # return all tokens (regardless of spacing) that consist of this text
-sub _token_similar {
-    my ($self, $token_text) = @_;
+method _token_similar($token_text) {
     $self->{_sth_token_similar}->execute($token_text);
     return $self->{_sth_token_similar}->fetchrow_arrayref;
 }
 
 # add a new token and return its id
-sub _add_token {
-    my ($self, $token_info) = @_;
+method _add_token($token_info) {
     $self->{_sth_add_token}->execute(@$token_info);
     return $self->storage->dbh->last_insert_id(undef, undef, "token", undef);
 }
 
 # return a random expression containing the given token
-sub _random_expr {
-    my ($self, $token_id) = @_;
-
+method _random_expr($token_id) {
     my $expr;
 
     if (!defined $token_id) {
@@ -252,9 +234,7 @@ sub _random_expr {
 }
 
 # return a new next/previous token
-sub _pos_token {
-    my ($self, $pos, $expr_id, $key_tokens) = @_;
-
+method _pos_token ($pos, $expr_id, $key_tokens) {
     $self->{"_sth_${pos}_token_get"}->execute($expr_id);
     my $pos_tokens = $self->{"_sth_${pos}_token_get"}->fetchall_arrayref();
 
@@ -275,8 +255,7 @@ sub _pos_token {
     return $novel_tokens[rand @novel_tokens];
 }
 
-sub _construct_reply {
-    my ($self, $what, $expr_id, $token_ids, $key_ids) = @_;
+method _construct_reply($what, $expr_id, $token_ids, $key_ids) {
     my $order          = $self->order;
     my $repeat_limit   = $self->repeat_limit;
     my $boundary_token = $self->storage->_boundary_token_id;

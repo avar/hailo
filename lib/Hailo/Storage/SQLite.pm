@@ -1,6 +1,7 @@
 package Hailo::Storage::SQLite;
 
 use 5.010;
+use Method::Signatures::Simple;
 use Any::Moose;
 BEGIN {
     return unless Any::Moose::moose_is_preferred();
@@ -41,9 +42,7 @@ around _build_dbi_options => sub {
 
 # Are we running in a mixed mode where we run in memory but
 # restore/backup to disk?
-sub _backup_memory_to_disk {
-    my ($self) = @_;
-
+method _backup_memory_to_disk {
     return (defined $self->brain
             and $self->brain ne ':memory:'
             and $self->arguments->{in_memory});
@@ -85,17 +84,14 @@ override initialized => sub {
     return -e $brain && super();
 };
 
-sub ready {
-    my ($self) = @_;
+method ready {
     my $brain = $self->brain;
     return unless defined $self->brain;
     return 1 if $self->brain eq ':memory:';
     return 1;
 }
 
-sub _set_pragmas {
-    my ($self) = @_;
-
+method _set_pragmas {
     my %pragmas;
 
     # speedy defaults when DB is not kept in memory
@@ -117,8 +113,7 @@ sub _set_pragmas {
     return;
 }
 
-sub save {
-    my ($self, $filename) = @_;
+method save($filename) {
     my $file = $filename // $self->brain;
 
     return unless $self->_engaged;

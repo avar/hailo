@@ -1,5 +1,6 @@
 package Hailo::Test::Tokenizer;
 use 5.010;
+use Method::Signatures::Simple;
 use Any::Moose;
 use namespace::clean -except => 'meta';
 use Hailo::Tokenizer::Words;

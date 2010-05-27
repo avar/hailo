@@ -1,5 +1,6 @@
 package Hailo::Test;
 use 5.010;
+use Method::Signatures::Simple;
 use autodie;
 use Any::Moose;
 use Hailo;
@@ -53,8 +54,7 @@ has tmpdir => (
     lazy_build => 1,
 );
 
-sub _build_tmpdir {
-    my ($self) = @_;
+method _build_tmpdir {
     my $storage = $self->storage;
 
     $storage =~ s/[^A-Za-z0-9]/-/g;
@@ -75,9 +75,7 @@ has tmpfile => (
     lazy_build => 1,
 );
 
-sub _build_tmpfile {
-    my ($self) = @_;
-
+method _build_tmpfile {
     # Dir to store our brains
     my $dir = $self->tmpdir;
 
@@ -93,8 +91,7 @@ has hailo => (
     lazy_build => 1,
 );
 
-sub _build_hailo {
-    my ($self) = @_;
+method _build_hailo {
     my $storage = $self->storage;
 
     my %opts = $self->_connect_opts;
@@ -103,8 +100,7 @@ sub _build_hailo {
     return $hailo;
 }
 
-sub get_brain {
-    my ($self) = @_;
+method get_brain {
     my $storage = $self->storage;
     my $brainrs = $self->brain;
 
@@ -120,8 +116,7 @@ sub get_brain {
     }
 }
 
-sub spawn_storage {
-    my ($self) = @_;
+method spawn_storage {
     my $storage = $self->storage;
     my $brainrs = $self->get_brain;
     my $ok = 1;
@@ -168,8 +163,7 @@ sub spawn_storage {
     return $ok;
 }
 
-sub unspawn_storage {
-    my ($self) = @_;
+method unspawn_storage {
     my $storage = $self->storage;
     my $brainrs = $self->get_brain;
 
@@ -196,8 +190,7 @@ sub unspawn_storage {
     }
 }
 
-sub _connect_opts {
-    my ($self) = @_;
+method _connect_opts {
     my $storage = $self->storage;
 
     my %opts;
@@ -244,16 +237,14 @@ has storage => (
     isa => 'Str',
 );
 
-sub train_file {
-    my ($self, $file) = @_;
+method train_file($file) {
     my $hailo = $self->hailo;
 
     my $f = $self->test_file($file);
     $hailo->train($f);
 }
 
-sub train_a_few_tokens {
-    my ($self) = @_;
+method train_a_few_tokens {
     my $hailo = $self->hailo;
 
     # Get some training material
@@ -277,8 +268,7 @@ sub train_a_few_tokens {
     return ($@, \@random_tokens);
 }
 
-sub test_trivial {
-    my ($self) = @_;
+method test_trivial {
     my $hailo = $self->hailo;
     my $storage = $self->storage;
 
@@ -288,8 +278,7 @@ sub test_trivial {
     is($hailo->reply('there'), "$string.", "$storage: Learned string correctly");
 }
 
-sub test_congress {
-    my ($self) = @_;
+method test_congress {
     my $hailo = $self->hailo;
     my $storage = $self->storage;
 
@@ -299,8 +288,7 @@ sub test_congress {
     is($hailo->reply('make'), $string, "$storage: Learned string correctly");
 }
 
-sub test_congress_unknown {
-    my ($self) = @_;
+method test_congress_unknown {
     my $hailo = $self->hailo;
     my $storage = $self->storage;
 
@@ -312,8 +300,7 @@ sub test_congress_unknown {
     is($hailo->reply('respecting'), $reply, "$storage: Got a random reply");
 }
 
-sub test_badger {
-    my ($self) = @_;
+method test_badger {
     my $hailo = $self->hailo;
     my $storage = $self->storage;
     my $brief = $self->brief;
@@ -340,8 +327,7 @@ sub test_badger {
     return;
 }
 
-sub train_filename {
-    my ($self, $filename, $lines) = @_;
+method train_filename($filename, $lines) {
     my $hailo   = $self->hailo;
     my $storage = $self->storage;
     my $fh      = $self->test_fh($filename);
@@ -354,8 +340,7 @@ sub train_filename {
     }
 }
 
-sub test_megahal {
-    my ($self, $lines) = @_;
+method test_megahal($lines) {
     my $hailo   = $self->hailo;
     my $storage = $self->storage;
     my $file    = Bot::Training->new->file("megahal")->file;
@@ -374,8 +359,7 @@ sub test_megahal {
     return;
 }
 
-sub test_timtoady {
-    my ($self, $lines) = @_;
+method test_timtoady($lines) {
     my $hailo    = $self->hailo;
     my $storage  = $self->storage;
     my $file     = $self->test_file('TimToady.trn');
@@ -401,8 +385,7 @@ sub test_timtoady {
     return;
 }
 
-sub test_babble {
-    my ($self) = @_;
+method test_babble {
     my $hailo = $self->hailo;
     my $storage = $self->storage;
 
@@ -418,8 +401,7 @@ sub test_babble {
     }
 }
 
-sub test_starcraft {
-    my ($self) = @_;
+method test_starcraft {
     my $hailo = $self->hailo;
     my $storage = $self->storage;
     my $file = Bot::Training->new->file("starcraft")->file;
@@ -454,8 +436,7 @@ sub test_starcraft {
   }
 }
 
-sub test_all_plan {
-    my ($self) = @_;
+method test_all_plan {
     my $storage = $self->storage;
 
   SKIP: {
@@ -476,8 +457,7 @@ sub test_all_plan {
   }
 }
 
-sub test_stats {
-    my ($self, $test_name) = @_;
+method test_stats($test_name) {
     state $last_token = 0;
     state $last_expr = 0;
     state $last_prev = 0;
@@ -495,9 +475,7 @@ sub test_stats {
     return;
 }
 
-sub test_all {
-    my ($self) = @_;
-
+method test_all {
     ok($self->hailo->_storage->ready(), "Storage object is ready for testing");
 
     for (all_tests()) {
@@ -508,9 +486,7 @@ sub test_all {
     return;
 }
 
-sub test_exhaustive {
-    my ($self) = @_;
-
+method test_exhaustive {
     ok($self->hailo->_storage->ready(), "Storage object is ready for testing");
 
     for (exhaustive_tests()) {
@@ -521,8 +497,7 @@ sub test_exhaustive {
     return;
 }
 
-sub some_tokens {
-    my ($self, $file, $lines) = @_;
+method some_tokens($file, $lines) {
     $lines //= 50;
     my $trn = slurp($file);
 
@@ -539,16 +514,12 @@ sub some_tokens {
     return @tokens;
 }
 
-sub test_fh {
-    my ($self, $file) = @_;
-
+method test_fh($file) {
     open my $fh, '<:encoding(utf8)', $file;
     return $fh;
 }
 
-sub test_file {
-    my ($self, $file) = @_;
-
+method test_file($file) {
     my $hailo_test = $INC{"Hailo/Test.pm"};
     $hailo_test =~ s[/[^/]+$][];
 
@@ -557,8 +528,7 @@ sub test_file {
     return $path;
 }
 
-sub DEMOLISH {
-    my ($self) = @_;
+method DEMOLISH {
     my $hailo = $self->hailo;
     my $storage = $self->storage;
 

@@ -1,6 +1,7 @@
 package Hailo::Command;
 
 use 5.010;
+use Method::Signatures::Simple;
 use Any::Moose;
 use Any::Moose 'X::Getopt';
 BEGIN {
@@ -230,9 +231,7 @@ before run => sub {
     return;
 };
 
-sub run {
-    my ($self) = @_;
-
+method run {
     if ($self->_go_version) {
         # Munging strictness because we don't have a version from a
         # Git checkout. Dist::Zilla provides it.
@@ -303,8 +302,7 @@ before train_progress => sub {
     return;
 };
 
-sub train_progress {
-    my ($self, $fh, $filename) = @_;
+method train_progress($fh, $filename) {
     my $lines = count_lines($filename);
     my $progress = Term::Sk->new('%d Elapsed: %8t %21b %4p %2d (%8c of %11m)', {
         # Start at line 1, not 0
@@ -335,9 +333,7 @@ sub train_progress {
 sub _getopt_spec_exception { goto &_getopt_full_usage }
 
 # --help
-sub _getopt_full_usage {
-    my ($self, $usage, $plain_str) = @_;
-
+method _getopt_full_usage($usage, $plain_str) {
     # If called from _getopt_spec_exception we get "Unknown option: foo"
     my $warning = ref $usage eq 'ARRAY' ? $usage->[0] : undef;
 

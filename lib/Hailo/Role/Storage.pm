@@ -1,6 +1,7 @@
 package Hailo::Role::Storage;
 
 use 5.010;
+use Method::Signatures::Simple;
 use Any::Moose '::Role';
 use namespace::clean -except => 'meta';
 
@@ -27,7 +28,7 @@ requires 'stop_learning';
 requires 'start_training';
 requires 'stop_training';
 
-sub save {
+method save {
     # does nothing by default
     return;
 }

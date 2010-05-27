@@ -1,6 +1,7 @@
 package Hailo::Tokenizer::Words;
 
 use 5.010;
+use Method::Signatures::Simple;
 use utf8;
 use Any::Moose;
 BEGIN {
@@ -45,9 +46,7 @@ my $DOTTED_STRICT = qr/\w+(?:$DECIMAL(?:\d+|\w{2,}))?/;
 my $WORD_STRICT   = qr/$DOTTED_STRICT(?:$APOSTROPHE$DOTTED_STRICT)*/;
 
 # input -> tokens
-sub make_tokens {
-    my ($self, $line) = @_;
-
+method make_tokens($line) {
     my @tokens;
     my @chunks = split /\s+/, $line;
 
@@ -112,8 +111,7 @@ sub make_tokens {
 }
 
 # tokens -> output
-sub make_output {
-    my ($self, $tokens) = @_;
+method make_output($tokens) {
     my $reply = '';
 
     for my $pos (0 .. $#{ $tokens }) {

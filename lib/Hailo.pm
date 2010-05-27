@@ -1,6 +1,7 @@
 package Hailo;
 
 use 5.010;
+use Method::Signatures::Simple;
 use autodie qw(open close);
 use Any::Moose;
 BEGIN {
@@ -137,9 +138,7 @@ for my $k (keys %has) {
     };
 }
 
-sub _new_class {
-    my ($self, $type, $class, $args) = @_;
-
+method _new_class($type, $class, $args) {
     my $pkg;
     if ($class =~ m[^\+(?<custom_plugin>.+)$]) {
         $pkg = $+{custom_plugin};
@@ -168,15 +167,12 @@ sub _new_class {
     return $pkg->new(%$args);
 }
 
-sub save {
-    my ($self) = @_;
+method save {
     $self->_storage->save(@_);
     return;
 }
 
-sub train {
-    my ($self, $input) = @_;
-
+method train($input) {
     $self->_storage->start_training();
 
     given ($input) {
@@ -209,9 +205,7 @@ sub train {
     return;
 }
 
-sub _train_fh {
-    my ($self, $fh, $filename) = @_;
-
+method _train_fh($fh, $filename) {
     while (my $line = <$fh>) {
         chomp $line;
         $self->_learn_one($line);
@@ -220,8 +214,7 @@ sub _train_fh {
     return;
 }
 
-sub learn {
-    my ($self, $input) = @_;
+method learn($input) {
     my $inputs;
 
     given ($input) {
@@ -229,7 +222,7 @@ sub learn {
             die "Cannot learn from undef input";
         }
         when (not ref) {
-            $inputs = [$input];            
+            $inputs = [$input];
         }
         # With an Array
         when (ref eq 'ARRAY') {
@@ -248,8 +241,7 @@ sub learn {
     return;
 }
 
-sub _learn_one {
-    my ($self, $input) = @_;
+method _learn_one($input) {
     my $engine  = $self->_engine;
 
     my $tokens = $self->_tokenizer->make_tokens($input);
@@ -258,15 +250,12 @@ sub _learn_one {
     return;
 }
 
-sub learn_reply {
-    my ($self, $input) = @_;
+method learn_reply($input) {
     $self->learn($input);
     return $self->reply($input);
 }
 
-sub reply {
-    my ($self, $input) = @_;
-
+method reply($input) {
     my $storage   = $self->_storage;
     # start_training() hasn't been called so we can't guarentee that
     # the storage has been engaged at this point. This must be called
@@ -290,14 +279,11 @@ sub reply {
     return $tokenizer->make_output($reply);
 }
 
-sub stats {
-    my ($self) = @_;
-
+method stats {
     return $self->_storage->totals();
 }
 
-sub DEMOLISH {
-    my ($self) = @_;
+method DEMOLISH {
     $self->save_on_exit if $self->{_storage} and $self->save;
     return;
 }

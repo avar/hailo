@@ -1,6 +1,7 @@
 package Hailo::Tokenizer::Chars;
 
 use 5.010;
+use Method::Signatures::Simple;
 use Any::Moose;
 BEGIN {
     return unless Any::Moose::moose_is_preferred();
@@ -13,16 +14,14 @@ with qw(Hailo::Role::Arguments
         Hailo::Role::Tokenizer);
 
 # output -> tokens
-sub make_tokens {
-    my ($self, $line) = @_;
+method make_tokens($line) {
     my @chars = split //, $line;
     my @tokens = map { [$self->spacing->{normal}, $_] } @chars;
     return \@tokens;
 }
 
 # tokens -> output
-sub make_output {
-    my ($self, $tokens) = @_;
+method make_output($tokens) {
     return trim(join '', map { $_->[1] } @$tokens);
 }
 

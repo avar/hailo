@@ -1,6 +1,7 @@
 package Hailo::UI::ReadLine;
 
 use 5.010;
+use Method::Signatures::Simple;
 use Any::Moose;
 BEGIN {
     return unless Any::Moose::moose_is_preferred();
@@ -20,8 +21,7 @@ sub BUILD {
     return;
 }
 
-sub run {
-    my ($self, $hailo) = @_;
+method run($hailo) {
     my $name = 'Hailo';
     my $term = Term::ReadLine->new($name);
 

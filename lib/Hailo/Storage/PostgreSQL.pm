@@ -1,6 +1,7 @@
 package Hailo::Storage::PostgreSQL;
 
 use 5.010;
+use Method::Signatures::Simple;
 use Any::Moose;
 BEGIN {
     return unless Any::Moose::moose_is_preferred();
@@ -21,8 +22,7 @@ override _build_dbd_options => sub {
     };
 };
 
-sub _build_dbi_options {
-    my ($self) = @_;
+method _build_dbi_options {
     my $dbd = $self->dbd;
     my $dbd_options = $self->dbd_options;
     my $args = $self->arguments;
@@ -43,9 +43,7 @@ sub _build_dbi_options {
     return \@options;
 }
 
-sub ready {
-    my ($self) = @_;
-
+method ready {
     return exists $self->arguments->{dbname};
 }
 

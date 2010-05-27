@@ -1,6 +1,7 @@
 package Hailo::Storage::Schema;
 
 use 5.010;
+use Method::Signatures::Simple;
 use strict;
 
 ## Soup to spawn the database itself / create statement handles
