@@ -5,7 +5,7 @@ use Hailo;
 use File::Temp qw(tempdir tempfile);
 use File::Slurp qw<slurp>;
 use Bot::Training;
-use Test::More tests => 3;
+use Test::More tests => 9;
 
 # Dir to store our brains
 my $dir = tempdir( "hailo-test-sqlite-in-memory-XXXX", CLEANUP => 0, TMPDIR => 1 );
