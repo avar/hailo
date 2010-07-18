@@ -2,6 +2,20 @@ Revision history for Hailo
 
 {{$NEXT}}
 
+    - The t/storage/SQLite/in-memory.t test that was supposed to check
+      if Hailo could operate in hybrid disk/in-memory mode never
+      worked.
+
+      It worked by learning "foo bar baz", then checking the disk size
+      and learning "foo bar baz" again, then checking if the size of
+      the database changed on disk. The problem was that SQLite would
+      only change the values of integer fields in the database, which
+      are constant size.
+
+      Turned it into a test that demonstrates that we're *not* using
+      the in-memory hybrid mode, which is the opposite of what it was
+      meant to do.
+
 0.51 2010-07-18 15:49:41
 
     - Bump dependencies for all modules to the latest CPAN
