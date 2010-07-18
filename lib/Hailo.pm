@@ -5,6 +5,7 @@ use autodie qw(open close);
 use Any::Moose;
 use Any::Moose 'X::StrictConstructor';
 use List::Util qw(first);
+use Scalar::Util qw(weaken);
 use namespace::clean -except => 'meta';
 
 use constant PLUGINS => [ qw[
@@ -122,6 +123,8 @@ for my $k (keys %has) {
     no strict 'refs';
     *{"_build__${k}"} = sub {
         my ($self) = @_;
+
+        weaken(my $s = $self);
         my $obj = $self->_new_class(
             $name,
             $self->$method_class,
@@ -135,7 +138,19 @@ for my $k (keys %has) {
                  : ()),
                 (($k ~~ [ qw< storage > ] and defined $self->brain)
                  ? (
-                     hailo => $self,
+                     hailo => {
+                         has_custom_order           => sub { $s->_custom_order },
+                         has_custom_tokenizer_class => sub { $s->_custom_tokenizer_class },
+                         set_order                  => sub {
+                             my ($db_order) = @_;
+                             $s->order($db_order);
+                             $s->_engine->order($db_order);
+                         },
+                         set_tokenizer_class => sub {
+                             my ($db_tokenizer_class) = @_;
+                             $s->tokenizer_class($db_tokenizer_class);
+                         },
+                     },
                      brain => $self->brain
                  )
                  : ()),
