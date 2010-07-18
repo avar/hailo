@@ -119,6 +119,7 @@ sub save {
 
     return unless $self->_engaged;
     if ($self->_backup_memory_to_disk) {
+        warn "Saving to $file";
         $self->dbh->sqlite_backup_to_file($file);
     }
     return;

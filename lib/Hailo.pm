@@ -310,6 +310,7 @@ sub stats {
 
 sub DEMOLISH {
     my ($self) = @_;
+    warn "Demolishing $self";
     $self->save_on_exit if $self->{_storage} and $self->save;
     return;
 }
